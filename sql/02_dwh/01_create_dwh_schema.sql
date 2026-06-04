@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS dwh.fact_order_item_sales CASCADE;
 DROP TABLE IF EXISTS dwh.dim_payment_type CASCADE;
 DROP TABLE IF EXISTS dwh.dim_order_status CASCADE;
 DROP TABLE IF EXISTS dwh.dim_product CASCADE;
+DROP TABLE IF EXISTS dwh.dim_geolocation CASCADE;
 DROP TABLE IF EXISTS dwh.dim_seller CASCADE;
 DROP TABLE IF EXISTS dwh.dim_customer CASCADE;
 DROP TABLE IF EXISTS dwh.dim_date CASCADE;

@@ -46,6 +46,16 @@ CREATE TABLE IF NOT EXISTS dwh.dim_product (
     product_volume_cm3 NUMERIC
 );
 
+CREATE TABLE IF NOT EXISTS dwh.dim_geolocation (
+    geolocation_key BIGSERIAL PRIMARY KEY,
+    zip_code_prefix TEXT UNIQUE NOT NULL,
+    geolocation_city TEXT,
+    geolocation_state TEXT,
+    geolocation_lat NUMERIC(12, 8),
+    geolocation_lng NUMERIC(12, 8),
+    source_record_count INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS dwh.dim_order_status (
     order_status_key BIGSERIAL PRIMARY KEY,
     order_status TEXT UNIQUE NOT NULL
@@ -215,6 +225,58 @@ ON CONFLICT (product_id) DO UPDATE SET
     product_height_cm = EXCLUDED.product_height_cm,
     product_width_cm = EXCLUDED.product_width_cm,
     product_volume_cm3 = EXCLUDED.product_volume_cm3;
+
+WITH geo_aggregates AS (
+    SELECT
+        geolocation_zip_code_prefix AS zip_code_prefix,
+        ROUND(AVG(geolocation_lat)::NUMERIC, 8) AS geolocation_lat,
+        ROUND(AVG(geolocation_lng)::NUMERIC, 8) AS geolocation_lng,
+        COUNT(*)::INTEGER AS source_record_count
+    FROM staging.olist_geolocation
+    WHERE geolocation_zip_code_prefix IS NOT NULL
+    GROUP BY geolocation_zip_code_prefix
+),
+geo_city_state_ranked AS (
+    SELECT
+        geolocation_zip_code_prefix AS zip_code_prefix,
+        geolocation_city,
+        geolocation_state,
+        ROW_NUMBER() OVER (
+            PARTITION BY geolocation_zip_code_prefix
+            ORDER BY COUNT(*) DESC, geolocation_state, geolocation_city
+        ) AS location_rank
+    FROM staging.olist_geolocation
+    WHERE geolocation_zip_code_prefix IS NOT NULL
+    GROUP BY
+        geolocation_zip_code_prefix,
+        geolocation_city,
+        geolocation_state
+)
+INSERT INTO dwh.dim_geolocation (
+    zip_code_prefix,
+    geolocation_city,
+    geolocation_state,
+    geolocation_lat,
+    geolocation_lng,
+    source_record_count
+)
+SELECT
+    a.zip_code_prefix,
+    r.geolocation_city,
+    r.geolocation_state,
+    a.geolocation_lat,
+    a.geolocation_lng,
+    a.source_record_count
+FROM geo_aggregates a
+LEFT JOIN geo_city_state_ranked r
+    ON r.zip_code_prefix = a.zip_code_prefix
+   AND r.location_rank = 1
+ON CONFLICT (zip_code_prefix) DO UPDATE SET
+    geolocation_city = EXCLUDED.geolocation_city,
+    geolocation_state = EXCLUDED.geolocation_state,
+    geolocation_lat = EXCLUDED.geolocation_lat,
+    geolocation_lng = EXCLUDED.geolocation_lng,
+    source_record_count = EXCLUDED.source_record_count;
 
 INSERT INTO dwh.dim_order_status (order_status)
 SELECT DISTINCT order_status

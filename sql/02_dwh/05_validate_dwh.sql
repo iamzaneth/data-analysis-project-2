@@ -8,6 +8,8 @@ SELECT 'dim_seller' AS table_name, COUNT(*) AS row_count FROM dwh.dim_seller
 UNION ALL
 SELECT 'dim_product' AS table_name, COUNT(*) AS row_count FROM dwh.dim_product
 UNION ALL
+SELECT 'dim_geolocation' AS table_name, COUNT(*) AS row_count FROM dwh.dim_geolocation
+UNION ALL
 SELECT 'dim_order_status' AS table_name, COUNT(*) AS row_count FROM dwh.dim_order_status
 UNION ALL
 SELECT 'dim_payment_type' AS table_name, COUNT(*) AS row_count FROM dwh.dim_payment_type
@@ -28,6 +30,7 @@ WITH table_counts AS (
     UNION ALL SELECT 'dim_customer' AS table_name, COUNT(*) AS row_count FROM dwh.dim_customer
     UNION ALL SELECT 'dim_seller' AS table_name, COUNT(*) AS row_count FROM dwh.dim_seller
     UNION ALL SELECT 'dim_product' AS table_name, COUNT(*) AS row_count FROM dwh.dim_product
+    UNION ALL SELECT 'dim_geolocation' AS table_name, COUNT(*) AS row_count FROM dwh.dim_geolocation
     UNION ALL SELECT 'dim_order_status' AS table_name, COUNT(*) AS row_count FROM dwh.dim_order_status
     UNION ALL SELECT 'dim_payment_type' AS table_name, COUNT(*) AS row_count FROM dwh.dim_payment_type
     UNION ALL SELECT 'fact_order_item_sales' AS table_name, COUNT(*) AS row_count FROM dwh.fact_order_item_sales
@@ -56,6 +59,11 @@ SELECT
     'dim_product' AS dwh_table,
     (SELECT COUNT(DISTINCT product_id) FROM staging.olist_products WHERE product_id IS NOT NULL) AS staging_count,
     (SELECT COUNT(*) FROM dwh.dim_product) AS dwh_count
+UNION ALL
+SELECT
+    'dim_geolocation' AS dwh_table,
+    (SELECT COUNT(DISTINCT geolocation_zip_code_prefix) FROM staging.olist_geolocation WHERE geolocation_zip_code_prefix IS NOT NULL) AS staging_count,
+    (SELECT COUNT(*) FROM dwh.dim_geolocation) AS dwh_count
 UNION ALL
 SELECT
     'dim_order_status' AS dwh_table,
@@ -133,6 +141,29 @@ UNION ALL
 SELECT 'fact_reviews.order_status_key' AS check_name, COUNT(*) AS issue_count
 FROM dwh.fact_reviews
 WHERE order_status_key IS NULL
+ORDER BY check_name;
+
+\echo '4b. Geolocation key coverage in facts'
+
+SELECT 'fact_order_item_sales.customer_geolocation_key' AS check_name, COUNT(*) AS missing_count
+FROM dwh.fact_order_item_sales
+WHERE customer_geolocation_key IS NULL
+UNION ALL
+SELECT 'fact_order_item_sales.seller_geolocation_key' AS check_name, COUNT(*) AS missing_count
+FROM dwh.fact_order_item_sales
+WHERE seller_geolocation_key IS NULL
+UNION ALL
+SELECT 'fact_order_delivery.customer_geolocation_key' AS check_name, COUNT(*) AS missing_count
+FROM dwh.fact_order_delivery
+WHERE customer_geolocation_key IS NULL
+UNION ALL
+SELECT 'fact_payments.customer_geolocation_key' AS check_name, COUNT(*) AS missing_count
+FROM dwh.fact_payments
+WHERE customer_geolocation_key IS NULL
+UNION ALL
+SELECT 'fact_reviews.customer_geolocation_key' AS check_name, COUNT(*) AS missing_count
+FROM dwh.fact_reviews
+WHERE customer_geolocation_key IS NULL
 ORDER BY check_name;
 
 \echo '5. Negative money values in facts'
@@ -214,6 +245,10 @@ WITH row_reconciliation AS (
         (SELECT COUNT(*) FROM dwh.dim_product)
     UNION ALL
     SELECT
+        (SELECT COUNT(DISTINCT geolocation_zip_code_prefix) FROM staging.olist_geolocation WHERE geolocation_zip_code_prefix IS NOT NULL),
+        (SELECT COUNT(*) FROM dwh.dim_geolocation)
+    UNION ALL
+    SELECT
         (SELECT COUNT(DISTINCT order_status) FROM staging.olist_orders WHERE order_status IS NOT NULL),
         (SELECT COUNT(*) FROM dwh.dim_order_status)
     UNION ALL
@@ -259,6 +294,7 @@ checks AS (
         UNION ALL SELECT COUNT(*) FROM dwh.dim_customer
         UNION ALL SELECT COUNT(*) FROM dwh.dim_seller
         UNION ALL SELECT COUNT(*) FROM dwh.dim_product
+        UNION ALL SELECT COUNT(*) FROM dwh.dim_geolocation
         UNION ALL SELECT COUNT(*) FROM dwh.dim_order_status
         UNION ALL SELECT COUNT(*) FROM dwh.dim_payment_type
         UNION ALL SELECT COUNT(*) FROM dwh.fact_order_item_sales

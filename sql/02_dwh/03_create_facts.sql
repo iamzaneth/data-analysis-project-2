@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS dwh.fact_order_item_sales (
     customer_key BIGINT REFERENCES dwh.dim_customer(customer_key),
     seller_key BIGINT REFERENCES dwh.dim_seller(seller_key),
     product_key BIGINT REFERENCES dwh.dim_product(product_key),
+    customer_geolocation_key BIGINT REFERENCES dwh.dim_geolocation(geolocation_key),
+    seller_geolocation_key BIGINT REFERENCES dwh.dim_geolocation(geolocation_key),
     order_status_key BIGINT REFERENCES dwh.dim_order_status(order_status_key),
     purchase_date_key INTEGER REFERENCES dwh.dim_date(date_key),
     shipping_limit_date_key INTEGER REFERENCES dwh.dim_date(date_key),
@@ -29,6 +31,7 @@ CREATE TABLE IF NOT EXISTS dwh.fact_order_delivery (
     order_delivery_key BIGSERIAL PRIMARY KEY,
     order_id TEXT UNIQUE NOT NULL,
     customer_key BIGINT REFERENCES dwh.dim_customer(customer_key),
+    customer_geolocation_key BIGINT REFERENCES dwh.dim_geolocation(geolocation_key),
     order_status_key BIGINT REFERENCES dwh.dim_order_status(order_status_key),
     purchase_date_key INTEGER REFERENCES dwh.dim_date(date_key),
     approved_date_key INTEGER REFERENCES dwh.dim_date(date_key),
@@ -55,6 +58,7 @@ CREATE TABLE IF NOT EXISTS dwh.fact_payments (
     order_id TEXT NOT NULL,
     payment_sequential INTEGER NOT NULL,
     customer_key BIGINT REFERENCES dwh.dim_customer(customer_key),
+    customer_geolocation_key BIGINT REFERENCES dwh.dim_geolocation(geolocation_key),
     payment_type_key BIGINT REFERENCES dwh.dim_payment_type(payment_type_key),
     order_status_key BIGINT REFERENCES dwh.dim_order_status(order_status_key),
     purchase_date_key INTEGER REFERENCES dwh.dim_date(date_key),
@@ -70,6 +74,7 @@ CREATE TABLE IF NOT EXISTS dwh.fact_reviews (
     review_id TEXT NOT NULL,
     order_id TEXT NOT NULL,
     customer_key BIGINT REFERENCES dwh.dim_customer(customer_key),
+    customer_geolocation_key BIGINT REFERENCES dwh.dim_geolocation(geolocation_key),
     order_status_key BIGINT REFERENCES dwh.dim_order_status(order_status_key),
     purchase_date_key INTEGER REFERENCES dwh.dim_date(date_key),
     review_creation_date_key INTEGER REFERENCES dwh.dim_date(date_key),
@@ -97,6 +102,8 @@ INSERT INTO dwh.fact_order_item_sales (
     customer_key,
     seller_key,
     product_key,
+    customer_geolocation_key,
+    seller_geolocation_key,
     order_status_key,
     purchase_date_key,
     shipping_limit_date_key,
@@ -115,6 +122,8 @@ SELECT
     c.customer_key,
     s.seller_key,
     p.product_key,
+    customer_geo.geolocation_key AS customer_geolocation_key,
+    seller_geo.geolocation_key AS seller_geolocation_key,
     os.order_status_key,
     purchase_date.date_key AS purchase_date_key,
     shipping_limit_date.date_key AS shipping_limit_date_key,
@@ -135,6 +144,10 @@ LEFT JOIN dwh.dim_seller s
     ON s.seller_id = oi.seller_id
 LEFT JOIN dwh.dim_product p
     ON p.product_id = oi.product_id
+LEFT JOIN dwh.dim_geolocation customer_geo
+    ON customer_geo.zip_code_prefix = c.customer_zip_code_prefix
+LEFT JOIN dwh.dim_geolocation seller_geo
+    ON seller_geo.zip_code_prefix = s.seller_zip_code_prefix
 LEFT JOIN dwh.dim_order_status os
     ON os.order_status = o.order_status
 LEFT JOIN dwh.dim_date purchase_date
@@ -147,6 +160,7 @@ WHERE oi.order_id IS NOT NULL
 INSERT INTO dwh.fact_order_delivery (
     order_id,
     customer_key,
+    customer_geolocation_key,
     order_status_key,
     purchase_date_key,
     approved_date_key,
@@ -170,6 +184,7 @@ INSERT INTO dwh.fact_order_delivery (
 SELECT
     o.order_id,
     c.customer_key,
+    customer_geo.geolocation_key AS customer_geolocation_key,
     os.order_status_key,
     purchase_date.date_key AS purchase_date_key,
     approved_date.date_key AS approved_date_key,
@@ -216,6 +231,8 @@ SELECT
 FROM staging.olist_orders o
 LEFT JOIN dwh.dim_customer c
     ON c.customer_id = o.customer_id
+LEFT JOIN dwh.dim_geolocation customer_geo
+    ON customer_geo.zip_code_prefix = c.customer_zip_code_prefix
 LEFT JOIN dwh.dim_order_status os
     ON os.order_status = o.order_status
 LEFT JOIN dwh.dim_date purchase_date
@@ -234,6 +251,7 @@ INSERT INTO dwh.fact_payments (
     order_id,
     payment_sequential,
     customer_key,
+    customer_geolocation_key,
     payment_type_key,
     order_status_key,
     purchase_date_key,
@@ -246,6 +264,7 @@ SELECT
     op.order_id,
     op.payment_sequential,
     c.customer_key,
+    customer_geo.geolocation_key AS customer_geolocation_key,
     pt.payment_type_key,
     os.order_status_key,
     purchase_date.date_key AS purchase_date_key,
@@ -258,6 +277,8 @@ LEFT JOIN staging.olist_orders o
     ON o.order_id = op.order_id
 LEFT JOIN dwh.dim_customer c
     ON c.customer_id = o.customer_id
+LEFT JOIN dwh.dim_geolocation customer_geo
+    ON customer_geo.zip_code_prefix = c.customer_zip_code_prefix
 LEFT JOIN dwh.dim_payment_type pt
     ON pt.payment_type = op.payment_type
 LEFT JOIN dwh.dim_order_status os
@@ -271,6 +292,7 @@ INSERT INTO dwh.fact_reviews (
     review_id,
     order_id,
     customer_key,
+    customer_geolocation_key,
     order_status_key,
     purchase_date_key,
     review_creation_date_key,
@@ -287,6 +309,7 @@ SELECT
     r.review_id,
     r.order_id,
     c.customer_key,
+    customer_geo.geolocation_key AS customer_geolocation_key,
     os.order_status_key,
     purchase_date.date_key AS purchase_date_key,
     review_creation_date.date_key AS review_creation_date_key,
@@ -307,6 +330,8 @@ LEFT JOIN staging.olist_orders o
     ON o.order_id = r.order_id
 LEFT JOIN dwh.dim_customer c
     ON c.customer_id = o.customer_id
+LEFT JOIN dwh.dim_geolocation customer_geo
+    ON customer_geo.zip_code_prefix = c.customer_zip_code_prefix
 LEFT JOIN dwh.dim_order_status os
     ON os.order_status = o.order_status
 LEFT JOIN dwh.dim_date purchase_date

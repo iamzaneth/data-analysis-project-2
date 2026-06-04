@@ -21,6 +21,12 @@ CREATE INDEX IF NOT EXISTS idx_dim_product_business_key
 CREATE INDEX IF NOT EXISTS idx_dim_product_category
     ON dwh.dim_product (product_category_name_english, product_category_name);
 
+CREATE INDEX IF NOT EXISTS idx_dim_geolocation_zip_code_prefix
+    ON dwh.dim_geolocation (zip_code_prefix);
+
+CREATE INDEX IF NOT EXISTS idx_dim_geolocation_state_city
+    ON dwh.dim_geolocation (geolocation_state, geolocation_city);
+
 CREATE INDEX IF NOT EXISTS idx_dim_order_status_business_key
     ON dwh.dim_order_status (order_status);
 
@@ -39,6 +45,12 @@ CREATE INDEX IF NOT EXISTS idx_fact_order_item_sales_seller_key
 CREATE INDEX IF NOT EXISTS idx_fact_order_item_sales_product_key
     ON dwh.fact_order_item_sales (product_key);
 
+CREATE INDEX IF NOT EXISTS idx_fact_order_item_sales_customer_geo_key
+    ON dwh.fact_order_item_sales (customer_geolocation_key);
+
+CREATE INDEX IF NOT EXISTS idx_fact_order_item_sales_seller_geo_key
+    ON dwh.fact_order_item_sales (seller_geolocation_key);
+
 CREATE INDEX IF NOT EXISTS idx_fact_order_item_sales_status_key
     ON dwh.fact_order_item_sales (order_status_key);
 
@@ -53,6 +65,9 @@ CREATE INDEX IF NOT EXISTS idx_fact_order_delivery_order_id
 
 CREATE INDEX IF NOT EXISTS idx_fact_order_delivery_customer_key
     ON dwh.fact_order_delivery (customer_key);
+
+CREATE INDEX IF NOT EXISTS idx_fact_order_delivery_customer_geo_key
+    ON dwh.fact_order_delivery (customer_geolocation_key);
 
 CREATE INDEX IF NOT EXISTS idx_fact_order_delivery_status_key
     ON dwh.fact_order_delivery (order_status_key);
@@ -75,6 +90,9 @@ CREATE INDEX IF NOT EXISTS idx_fact_payments_order_id
 CREATE INDEX IF NOT EXISTS idx_fact_payments_customer_key
     ON dwh.fact_payments (customer_key);
 
+CREATE INDEX IF NOT EXISTS idx_fact_payments_customer_geo_key
+    ON dwh.fact_payments (customer_geolocation_key);
+
 CREATE INDEX IF NOT EXISTS idx_fact_payments_payment_type_key
     ON dwh.fact_payments (payment_type_key);
 
@@ -89,6 +107,9 @@ CREATE INDEX IF NOT EXISTS idx_fact_reviews_order_id
 
 CREATE INDEX IF NOT EXISTS idx_fact_reviews_customer_key
     ON dwh.fact_reviews (customer_key);
+
+CREATE INDEX IF NOT EXISTS idx_fact_reviews_customer_geo_key
+    ON dwh.fact_reviews (customer_geolocation_key);
 
 CREATE INDEX IF NOT EXISTS idx_fact_reviews_status_key
     ON dwh.fact_reviews (order_status_key);
