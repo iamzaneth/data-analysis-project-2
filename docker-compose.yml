@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: dwh_postgres
+    environment:
+      POSTGRES_DB: dwh
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - olist_postgres_data:/var/lib/postgresql/data
+      - ./data/raw:/data/raw:ro
+
+volumes:
+  olist_postgres_data:
