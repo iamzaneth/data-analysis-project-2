@@ -1,16 +1,16 @@
-# Huong dan chay tang DWH
+﻿# Hướng dẫn chạy tầng DWH
 
-Tang DWH duoc build tu du lieu da load va validate trong schema `staging`.
-Thiet ke hien tai dung Star Schema de phuc vu cac mart phan tich:
+Tầng DWH được xây dựng từ dữ liệu đã nạp và kiểm tra trong schema `staging`. Thiết kế hiện tại dùng Star Schema để phục vụ các nhóm phân tích chính:
 
-- Sales Mart
-- Logistics Mart
-- Customer Satisfaction Mart
-- Seller/Product Mart
+- Phân tích bán hàng
+- Phân tích vận chuyển
+- Phân tích mức độ hài lòng của khách hàng
+- Phân tích người bán và sản phẩm
+- Phân tích địa lý
 
-## 1. Dieu kien truoc khi chay
+## 1. Điều kiện trước khi chạy
 
-Can chay xong tang staging truoc:
+Cần chạy xong tầng staging trước:
 
 ```bat
 docker exec -i dwh_postgres psql -U user -d dwh < sql/01_staging/create_staging_schema.sql
@@ -18,9 +18,15 @@ docker exec -i dwh_postgres psql -U user -d dwh < sql/01_staging/load_csv_to_sta
 docker exec -i dwh_postgres psql -U user -d dwh < sql/01_staging/validate_staging_data.sql
 ```
 
-Trong file validate staging, phan `Validation summary` nen co tat ca `status = PASS`.
+Trong kết quả kiểm tra staging, phần `Validation summary` nên có tất cả `status = PASS`.
 
-## 2. Thu tu chay DWH bang CMD
+## 2. Khởi động PostgreSQL bằng Docker
+
+```bat
+docker compose up -d
+```
+
+## 3. Chạy DWH bằng CMD
 
 ```bat
 docker exec -i dwh_postgres psql -U user -d dwh < sql/02_dwh/01_create_dwh_schema.sql
@@ -30,7 +36,7 @@ docker exec -i dwh_postgres psql -U user -d dwh < sql/02_dwh/04_create_indexes.s
 docker exec -i dwh_postgres psql -U user -d dwh < sql/02_dwh/05_validate_dwh.sql
 ```
 
-## 3. Thu tu chay DWH bang PowerShell
+## 4. Chạy DWH bằng PowerShell
 
 ```powershell
 Get-Content sql/02_dwh/01_create_dwh_schema.sql | docker exec -i dwh_postgres psql -U user -d dwh
@@ -40,49 +46,51 @@ Get-Content sql/02_dwh/04_create_indexes.sql | docker exec -i dwh_postgres psql 
 Get-Content sql/02_dwh/05_validate_dwh.sql | docker exec -i dwh_postgres psql -U user -d dwh
 ```
 
-## 4. Y nghia tung file
+## 5. Ý nghĩa từng file
 
-### 01_create_dwh_schema.sql
+### 5.1. `01_create_dwh_schema.sql`
 
-Tao schema `dwh` va reset cac bang DWH cu.
+Tạo schema `dwh` và reset các bảng DWH cũ.
 
-File drop bang fact truoc, dimension sau, vi fact co foreign key tro toi dimension.
-Cac bang duoc drop gom:
+File drop bảng fact trước, dimension sau vì fact có foreign key trỏ tới dimension.
+
+Các bảng được drop gồm:
 
 - Facts: `fact_reviews`, `fact_payments`, `fact_order_delivery`, `fact_order_item_sales`
-- Dimensions: `dim_payment_type`, `dim_order_status`, `dim_product`, `dim_seller`, `dim_customer`, `dim_date`
+- Dimensions: `dim_payment_type`, `dim_order_status`, `dim_geolocation`, `dim_product`, `dim_seller`, `dim_customer`, `dim_date`
 
-### 02_create_dimensions.sql
+### 5.2. `02_create_dimensions.sql`
 
-Tao va load cac dimension table tu staging:
+Tạo và nạp các bảng dimension từ staging:
 
-- `dim_date`: bang ngay dung cho nhieu vai tro ngay khac nhau.
-- `dim_customer`: thong tin khach hang.
-- `dim_seller`: thong tin nguoi ban.
-- `dim_product`: thong tin san pham, co them category tieng Anh tu `product_category_name_translation`.
-- `dim_order_status`: danh muc trang thai don hang.
-- `dim_payment_type`: danh muc loai thanh toan.
+- `dim_date`: bảng ngày dùng cho nhiều vai trò ngày khác nhau.
+- `dim_customer`: thông tin khách hàng.
+- `dim_seller`: thông tin người bán.
+- `dim_product`: thông tin sản phẩm, có thêm category tiếng Anh từ `product_category_name_translation`.
+- `dim_geolocation`: thông tin địa lý theo `zip_code_prefix`, gồm city/state và tọa độ trung bình.
+- `dim_order_status`: danh mục trạng thái đơn hàng.
+- `dim_payment_type`: danh mục loại thanh toán.
 
-`dim_date` la role-playing dimension, duoc dung cho:
+`dim_date` là role-playing dimension, được dùng cho:
 
-- ngay mua hang
-- ngay duyet don
-- ngay giao cho don vi van chuyen
-- ngay giao cho khach
-- ngay giao du kien
-- ngay tao review
-- ngay phan hoi review
+- Ngày mua hàng.
+- Ngày duyệt đơn.
+- Ngày giao cho đơn vị vận chuyển.
+- Ngày giao cho khách.
+- Ngày giao dự kiến.
+- Ngày tạo review.
+- Ngày phản hồi review.
 
-### 03_create_facts.sql
+### 5.3. `03_create_facts.sql`
 
-Tao va load cac fact table tu staging ket hop voi dimension key:
+Tạo và nạp các bảng fact từ staging, kết hợp với surrogate key từ dimension:
 
-- `fact_order_item_sales`: grain la 1 dong = 1 san pham trong 1 don hang.
-- `fact_order_delivery`: grain la 1 dong = 1 don hang.
-- `fact_payments`: grain la 1 dong = 1 payment record cua 1 don hang.
-- `fact_reviews`: grain la 1 dong = 1 review cua 1 don hang.
+- `fact_order_item_sales`: grain là 1 dòng = 1 sản phẩm trong 1 đơn hàng.
+- `fact_order_delivery`: grain là 1 dòng = 1 đơn hàng.
+- `fact_payments`: grain là 1 dòng = 1 payment record của 1 đơn hàng.
+- `fact_reviews`: grain là 1 dòng = 1 review của 1 đơn hàng.
 
-File nay tinh them cac measure quan trong:
+Các chỉ số quan trọng được tính thêm:
 
 - `total_item_value = price + freight_value`
 - `approval_hours`
@@ -95,46 +103,52 @@ File nay tinh them cac measure quan trong:
 - `has_comment_title`
 - `has_comment_message`
 
-Fact review khong luu text dai nhu `review_comment_message`; chi luu bien boolean de biet review co comment hay khong.
+Các fact có thêm khóa địa lý để phân tích theo vị trí:
 
-### 04_create_indexes.sql
+- `customer_geolocation_key`: có trong `fact_order_item_sales`, `fact_order_delivery`, `fact_payments`, `fact_reviews`.
+- `seller_geolocation_key`: có trong `fact_order_item_sales`.
 
-Tao index cho cac cot hay dung de join va filter:
+`fact_reviews` không lưu text dài như `review_comment_message`; bảng này chỉ lưu biến boolean để biết review có title/comment hay không.
 
-- surrogate key trong fact: `customer_key`, `seller_key`, `product_key`, `order_status_key`, `payment_type_key`
-- business key: `order_id`, `customer_id`, `seller_id`, `product_id`
-- cac cot ngay: `purchase_date_key`, `shipping_limit_date_key`, `delivered_customer_date_key`, `estimated_delivery_date_key`, `review_creation_date_key`
-- cot filter phan tich: `review_score`, `is_late`
+### 5.4. `04_create_indexes.sql`
 
-### 05_validate_dwh.sql
+Tạo index cho các cột thường dùng để join và lọc dữ liệu:
 
-Kiem tra chat luong tang DWH sau khi build:
+- Surrogate key trong fact: `customer_key`, `seller_key`, `product_key`, `order_status_key`, `payment_type_key`.
+- Geolocation key trong fact: `customer_geolocation_key`, `seller_geolocation_key`.
+- Business key: `order_id`, `customer_id`, `seller_id`, `product_id`.
+- Cột ngày: `purchase_date_key`, `shipping_limit_date_key`, `delivered_customer_date_key`, `estimated_delivery_date_key`, `review_creation_date_key`.
+- Cột lọc phân tích: `review_score`, `is_late`.
 
-- so dong tung bang DWH
-- bang nao bi rong
-- so dong staging va DWH co khop khong
-- fact co thieu dimension key khong
-- `price`, `freight_value`, `total_item_value`, `payment_value` co am khong
-- `review_score` co nam ngoai khoang 1-5 khong
-- ty le don giao tre
-- tong doanh thu tu `fact_order_item_sales`
+### 5.5. `05_validate_dwh.sql`
 
-Neu phan `DWH validation summary` deu la `PASS`, tang DWH co ban da on.
+Kiểm tra chất lượng tầng DWH sau khi build:
 
-## 5. Mo hinh DWH
+- Số dòng của từng bảng DWH.
+- Bảng nào bị rỗng.
+- Số dòng staging và DWH có khớp không.
+- Fact có thiếu dimension key quan trọng không.
+- Số dòng fact thiếu geolocation key để theo dõi coverage địa lý.
+- `price`, `freight_value`, `total_item_value`, `payment_value` có âm không.
+- `review_score` có nằm ngoài khoảng 1-5 không.
+- Tỷ lệ đơn giao trễ.
+- Tổng doanh thu từ `fact_order_item_sales`.
 
-### Dimensions
+### 5.6. Mô hình DWH
+
+Dimensions:
 
 ```text
 dwh.dim_date
 dwh.dim_customer
 dwh.dim_seller
 dwh.dim_product
+dwh.dim_geolocation
 dwh.dim_order_status
 dwh.dim_payment_type
 ```
 
-### Facts
+Facts:
 
 ```text
 dwh.fact_order_item_sales
@@ -143,53 +157,52 @@ dwh.fact_payments
 dwh.fact_reviews
 ```
 
-## 6. Vi sao dung Star Schema
+### 5.7. Vì sao dùng Star Schema
 
-Project dung Star Schema vi:
+Project dùng Star Schema vì:
 
-- de query va de lam dashboard
-- moi fact join truc tiep toi dimension
-- phu hop voi cac cau hoi phan tich doanh thu, giao hang, thanh toan, review
-- de giai thich trong do an DWH hon Snowflake Schema
+- Dễ query và dễ làm dashboard.
+- Mỗi fact join trực tiếp tới dimension.
+- Phù hợp với các câu hỏi phân tích doanh thu, giao hàng, thanh toán, review và địa lý.
+- Dễ giải thích trong đồ án DWH hơn Snowflake Schema.
 
-Snowflake Schema co the giam trung lap du lieu nhung query se phuc tap hon, khong can thiet cho ban DWH dau tien cua project nay.
+Snowflake Schema có thể giảm trùng lặp dữ liệu, nhưng query sẽ phức tạp hơn và chưa cần thiết cho phiên bản DWH hiện tại.
 
-## 7. Lenh kiem tra bang
+## 6. Kiểm tra thủ công
 
-Liet ke bang trong schema `dwh`:
+Liệt kê bảng trong schema `dwh`:
 
 ```bat
 docker exec -it dwh_postgres psql -U user -d dwh -c "\dt dwh.*"
 ```
 
-Xem cau truc bang:
+Xem cấu trúc bảng:
 
 ```bat
 docker exec -it dwh_postgres psql -U user -d dwh -c "\d+ dwh.fact_order_item_sales"
 ```
 
-Xem 10 dong mau:
+Xem 10 dòng mẫu:
 
 ```bat
 docker exec -it dwh_postgres psql -U user -d dwh -c "SELECT * FROM dwh.fact_order_item_sales LIMIT 10;"
 ```
 
-Dem so dong cac bang DWH:
+Đếm số dòng và validate DWH:
 
 ```bat
 docker exec -i dwh_postgres psql -U user -d dwh < sql/02_dwh/05_validate_dwh.sql
 ```
 
-## 8. Ket qua validate hien tai
+## 7. Kết quả validate cần đạt
 
-Lan validate gan nhat cho thay DWH da pass cac check co ban:
+Sau khi chạy `05_validate_dwh.sql`, cần kiểm tra:
 
-- khong co bang DWH rong
-- row count staging va DWH khop
-- khong thieu dimension key trong fact
-- khong co gia tri tien am
-- review score nam trong khoang 1-5
-- ty le don giao tre khoang 8.11%
-- tong `total_item_revenue` khoang 15,843,553.24
+- Phần `DWH row count by table`: mỗi bảng DWH cần có số dòng lớn hơn 0.
+- Phần `Empty DWH tables`: không nên trả về dòng nào.
+- Phần `Staging to DWH row count reconciliation`: `staging_count` và `dwh_count` nên khớp.
+- Phần `Missing dimension keys in facts`: các dòng nên có `issue_count = 0`.
+- Phần `Geolocation key coverage in facts`: dùng để theo dõi độ phủ địa lý; nếu có missing count thì cần xem lại zip code không khớp với bảng geolocation.
+- Phần `DWH validation summary`: các dòng nên có `status = PASS`.
 
-Day la moc DWH co ban da san sang de phat trien data mart hoac dashboard.
+Lần validate trước khi bổ sung `dim_geolocation` cho thấy DWH đã pass các check cơ bản. Sau khi bổ sung `dim_geolocation`, cần chạy lại toàn bộ script DWH và `05_validate_dwh.sql` để cập nhật kết quả validate mới.
