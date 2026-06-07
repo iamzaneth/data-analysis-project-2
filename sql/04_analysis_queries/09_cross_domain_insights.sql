@@ -10,14 +10,14 @@
 -- Insight: Categories with high revenue and low review performance
 WITH category_metrics AS (
     SELECT
-        product_category_name_english AS product_category,
+        product_category_name AS product_category,
         SUM(total_orders) AS total_orders,
         SUM(total_revenue) AS total_revenue,
         SUM(total_freight_value) AS total_freight_value,
         SUM(avg_review_score * total_orders)::NUMERIC / NULLIF(SUM(total_orders) FILTER (WHERE avg_review_score IS NOT NULL), 0) AS avg_review_score,
         SUM(low_review_count)::NUMERIC / NULLIF(SUM(total_orders), 0) * 100 AS low_review_rate_pct
     FROM mart.mart_product_category
-    GROUP BY product_category_name_english
+    GROUP BY product_category_name
 )
 SELECT
     product_category,
@@ -115,13 +115,13 @@ ORDER BY avg_payment_per_order DESC;
 -- Insight: Categories with both high freight and high low-review rate
 WITH category_metrics AS (
     SELECT
-        product_category_name_english AS product_category,
+        product_category_name AS product_category,
         SUM(total_orders) AS total_orders,
         SUM(total_revenue) AS total_revenue,
         SUM(total_freight_value) AS total_freight_value,
         SUM(low_review_count)::NUMERIC / NULLIF(SUM(total_orders), 0) * 100 AS low_review_rate_pct
     FROM mart.mart_product_category
-    GROUP BY product_category_name_english
+    GROUP BY product_category_name
 )
 SELECT
     product_category,
@@ -139,14 +139,14 @@ SELECT
     seller_id,
     seller_state,
     seller_city,
-    product_category_name_english AS product_category,
+    product_category_name AS product_category,
     SUM(total_orders) AS total_orders,
     ROUND(SUM(total_revenue)::NUMERIC, 2) AS total_revenue,
     ROUND(SUM(avg_review_score * total_orders)::NUMERIC / NULLIF(SUM(total_orders) FILTER (WHERE avg_review_score IS NOT NULL), 0), 2) AS avg_review_score,
     ROUND(SUM(low_review_count)::NUMERIC / NULLIF(SUM(total_orders), 0) * 100, 2) AS low_review_rate_pct,
     ROUND(SUM(late_orders)::NUMERIC / NULLIF(SUM(total_orders), 0) * 100, 2) AS late_order_share_pct
 FROM mart.mart_seller_performance
-GROUP BY seller_id, seller_state, seller_city, product_category_name_english
+GROUP BY seller_id, seller_state, seller_city, product_category_name
 HAVING SUM(total_orders) >= 20
 ORDER BY low_review_rate_pct DESC, late_order_share_pct DESC, total_revenue DESC
 LIMIT 50;
@@ -154,14 +154,14 @@ LIMIT 50;
 -- Risk table: Category risk score
 WITH category_metrics AS (
     SELECT
-        product_category_name_english AS product_category,
+        product_category_name AS product_category,
         SUM(total_orders) AS total_orders,
         SUM(total_revenue) AS total_revenue,
         SUM(total_freight_value)::NUMERIC / NULLIF(SUM(total_revenue), 0) * 100 AS freight_to_revenue_pct,
         SUM(low_review_count)::NUMERIC / NULLIF(SUM(total_orders), 0) * 100 AS low_review_rate_pct,
         SUM(avg_review_score * total_orders)::NUMERIC / NULLIF(SUM(total_orders) FILTER (WHERE avg_review_score IS NOT NULL), 0) AS avg_review_score
     FROM mart.mart_product_category
-    GROUP BY product_category_name_english
+    GROUP BY product_category_name
 )
 SELECT
     product_category,

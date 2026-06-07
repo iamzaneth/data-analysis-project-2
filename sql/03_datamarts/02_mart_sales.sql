@@ -14,7 +14,6 @@ SELECT
     d.month,
     d.month_name,
     COALESCE(p.product_category_name, 'Unknown') AS product_category_name,
-    COALESCE(p.product_category_name_english, 'Unknown') AS product_category_name_english,
     COALESCE(c.customer_state, customer_geo.geolocation_state, 'Unknown') AS customer_state,
     COUNT(DISTINCT f.order_id) AS total_orders,
     COUNT(*) AS total_order_items,
@@ -46,5 +45,4 @@ GROUP BY
     d.month,
     d.month_name,
     COALESCE(p.product_category_name, 'Unknown'),
-    COALESCE(p.product_category_name_english, 'Unknown'),
     COALESCE(c.customer_state, customer_geo.geolocation_state, 'Unknown');

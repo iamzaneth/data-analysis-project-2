@@ -32,13 +32,13 @@ ORDER BY year, month;
 
 -- Ranking: Top 10 categories by revenue
 SELECT
-    product_category_name_english AS product_category,
+    product_category_name AS product_category,
     SUM(total_orders) AS total_orders,
     SUM(total_order_items) AS total_items,
     ROUND(SUM(total_item_revenue)::NUMERIC, 2) AS total_revenue,
     ROUND(SUM(total_item_revenue)::NUMERIC / NULLIF(SUM(total_orders), 0), 2) AS avg_order_value
 FROM mart.mart_sales
-GROUP BY product_category_name_english
+GROUP BY product_category_name
 ORDER BY total_revenue DESC
 LIMIT 10;
 
@@ -56,24 +56,24 @@ LIMIT 10;
 
 -- Ranking: Top categories by order count
 SELECT
-    product_category_name_english AS product_category,
+    product_category_name AS product_category,
     SUM(total_orders) AS total_orders,
     ROUND(SUM(total_item_revenue)::NUMERIC, 2) AS total_revenue,
     ROUND(SUM(total_item_revenue)::NUMERIC / NULLIF(SUM(total_orders), 0), 2) AS avg_order_value
 FROM mart.mart_sales
-GROUP BY product_category_name_english
+GROUP BY product_category_name
 ORDER BY total_orders DESC
 LIMIT 15;
 
 -- Insight: Freight-to-GMV ratio by category
 SELECT
-    product_category_name_english AS product_category,
+    product_category_name AS product_category,
     ROUND(SUM(gross_merchandise_value)::NUMERIC, 2) AS gross_merchandise_value,
     ROUND(SUM(total_freight_value)::NUMERIC, 2) AS total_freight_value,
     ROUND(SUM(total_freight_value)::NUMERIC / NULLIF(SUM(gross_merchandise_value), 0) * 100, 2) AS freight_to_gmv_pct,
     SUM(total_orders) AS total_orders
 FROM mart.mart_sales
-GROUP BY product_category_name_english
+GROUP BY product_category_name
 HAVING SUM(gross_merchandise_value) > 0
 ORDER BY freight_to_gmv_pct DESC, gross_merchandise_value DESC
 LIMIT 20;
@@ -81,13 +81,13 @@ LIMIT 20;
 -- Insight: High revenue categories with high freight burden
 WITH category_sales AS (
     SELECT
-        product_category_name_english AS product_category,
+        product_category_name AS product_category,
         SUM(total_orders) AS total_orders,
         SUM(gross_merchandise_value) AS gross_merchandise_value,
         SUM(total_freight_value) AS total_freight_value,
         SUM(total_item_revenue) AS total_revenue
     FROM mart.mart_sales
-    GROUP BY product_category_name_english
+    GROUP BY product_category_name
 )
 SELECT
     product_category,
@@ -104,10 +104,10 @@ LIMIT 20;
 -- Chart: Revenue share by category
 WITH category_sales AS (
     SELECT
-        product_category_name_english AS product_category,
+        product_category_name AS product_category,
         SUM(total_item_revenue) AS total_revenue
     FROM mart.mart_sales
-    GROUP BY product_category_name_english
+    GROUP BY product_category_name
 )
 SELECT
     product_category,

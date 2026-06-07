@@ -35,7 +35,7 @@ ORDER BY table_name;
 
 SELECT 'mart_sales' AS table_name, COUNT(*) AS issue_count
 FROM mart.mart_sales
-WHERE year IS NULL OR month IS NULL OR product_category_name_english IS NULL OR customer_state IS NULL
+WHERE year IS NULL OR month IS NULL OR product_category_name IS NULL OR customer_state IS NULL
 UNION ALL
 SELECT 'mart_logistics', COUNT(*)
 FROM mart.mart_logistics
@@ -47,11 +47,11 @@ WHERE year IS NULL OR month IS NULL OR customer_state IS NULL OR is_late IS NULL
 UNION ALL
 SELECT 'mart_seller_performance', COUNT(*)
 FROM mart.mart_seller_performance
-WHERE year IS NULL OR month IS NULL OR seller_id IS NULL OR product_category_name_english IS NULL
+WHERE year IS NULL OR month IS NULL OR seller_id IS NULL OR product_category_name IS NULL
 UNION ALL
 SELECT 'mart_product_category', COUNT(*)
 FROM mart.mart_product_category
-WHERE year IS NULL OR month IS NULL OR product_category_name_english IS NULL
+WHERE year IS NULL OR month IS NULL OR product_category_name IS NULL
 UNION ALL
 SELECT 'mart_payment', COUNT(*)
 FROM mart.mart_payment
@@ -185,15 +185,15 @@ WITH empty_tables AS (
 ),
 null_grain_fields AS (
     SELECT COUNT(*) AS issue_count FROM mart.mart_sales
-    WHERE year IS NULL OR month IS NULL OR product_category_name_english IS NULL OR customer_state IS NULL
+    WHERE year IS NULL OR month IS NULL OR product_category_name IS NULL OR customer_state IS NULL
     UNION ALL SELECT COUNT(*) FROM mart.mart_logistics
     WHERE year IS NULL OR month IS NULL OR customer_state IS NULL OR order_status IS NULL
     UNION ALL SELECT COUNT(*) FROM mart.mart_customer_satisfaction
     WHERE year IS NULL OR month IS NULL OR customer_state IS NULL OR is_late IS NULL
     UNION ALL SELECT COUNT(*) FROM mart.mart_seller_performance
-    WHERE year IS NULL OR month IS NULL OR seller_id IS NULL OR product_category_name_english IS NULL
+    WHERE year IS NULL OR month IS NULL OR seller_id IS NULL OR product_category_name IS NULL
     UNION ALL SELECT COUNT(*) FROM mart.mart_product_category
-    WHERE year IS NULL OR month IS NULL OR product_category_name_english IS NULL
+    WHERE year IS NULL OR month IS NULL OR product_category_name IS NULL
     UNION ALL SELECT COUNT(*) FROM mart.mart_payment
     WHERE year IS NULL OR month IS NULL OR payment_type IS NULL OR customer_state IS NULL
     UNION ALL SELECT COUNT(*) FROM mart.mart_geolocation

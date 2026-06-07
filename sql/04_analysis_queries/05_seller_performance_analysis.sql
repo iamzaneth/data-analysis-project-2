@@ -81,14 +81,14 @@ ORDER BY total_revenue DESC;
 
 -- Chart: Seller performance by category
 SELECT
-    product_category_name_english AS product_category,
+    product_category_name AS product_category,
     COUNT(DISTINCT seller_id) AS total_sellers,
     SUM(total_orders) AS total_orders,
     ROUND(SUM(total_revenue)::NUMERIC, 2) AS total_revenue,
     ROUND(SUM(avg_review_score * total_orders)::NUMERIC / NULLIF(SUM(total_orders) FILTER (WHERE avg_review_score IS NOT NULL), 0), 2) AS avg_review_score,
     ROUND(SUM(late_orders)::NUMERIC / NULLIF(SUM(total_orders), 0) * 100, 2) AS late_order_share_pct
 FROM mart.mart_seller_performance
-GROUP BY product_category_name_english
+GROUP BY product_category_name
 ORDER BY total_revenue DESC
 LIMIT 25;
 

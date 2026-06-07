@@ -21,7 +21,6 @@ WITH sales_base AS (
         f.order_id,
         f.seller_key,
         COALESCE(p.product_category_name, 'Unknown') AS product_category_name,
-        COALESCE(p.product_category_name_english, 'Unknown') AS product_category_name_english,
         f.price,
         f.freight_value,
         f.total_item_value,
@@ -42,7 +41,6 @@ sales_by_category_month AS (
         month,
         month_name,
         product_category_name,
-        product_category_name_english,
         COUNT(DISTINCT order_id) AS total_orders,
         COUNT(*) AS total_items,
         COUNT(DISTINCT seller_key) AS total_sellers,
@@ -58,8 +56,7 @@ sales_by_category_month AS (
         year,
         month,
         month_name,
-        product_category_name,
-        product_category_name_english
+        product_category_name
 ),
 distinct_order_category_month AS (
     SELECT DISTINCT
@@ -67,8 +64,7 @@ distinct_order_category_month AS (
         month,
         month_name,
         order_id,
-        product_category_name,
-        product_category_name_english
+        product_category_name
     FROM sales_base
 ),
 review_by_category_month AS (
@@ -77,7 +73,6 @@ review_by_category_month AS (
         bridge.month,
         bridge.month_name,
         bridge.product_category_name,
-        bridge.product_category_name_english,
         COUNT(r.review_key) AS total_reviews,
         ROUND(AVG(r.review_score), 2) AS avg_review_score,
         COUNT(r.review_key) FILTER (WHERE r.review_score <= 2) AS low_review_count,
@@ -89,15 +84,13 @@ review_by_category_month AS (
         bridge.year,
         bridge.month,
         bridge.month_name,
-        bridge.product_category_name,
-        bridge.product_category_name_english
+        bridge.product_category_name
 )
 SELECT
     sales.year,
     sales.month,
     sales.month_name,
     sales.product_category_name,
-    sales.product_category_name_english,
     sales.total_orders,
     sales.total_items,
     sales.total_sellers,
@@ -115,5 +108,4 @@ FROM sales_by_category_month sales
 LEFT JOIN review_by_category_month review
     ON review.year = sales.year
    AND review.month = sales.month
-   AND review.product_category_name = sales.product_category_name
-   AND review.product_category_name_english = sales.product_category_name_english;
+   AND review.product_category_name = sales.product_category_name;

@@ -24,7 +24,7 @@ WITH sales_base AS (
         COALESCE(s.seller_id, f.seller_id, 'Unknown') AS seller_id,
         COALESCE(s.seller_state, seller_geo.geolocation_state, 'Unknown') AS seller_state,
         COALESCE(s.seller_city, seller_geo.geolocation_city, 'Unknown') AS seller_city,
-        COALESCE(p.product_category_name_english, 'Unknown') AS product_category_name_english,
+        COALESCE(p.product_category_name, 'Unknown') AS product_category_name,
         f.price,
         f.freight_value,
         f.total_item_value
@@ -48,7 +48,7 @@ sales_by_seller_category_month AS (
         seller_id,
         seller_state,
         seller_city,
-        product_category_name_english,
+        product_category_name,
         COUNT(DISTINCT order_id) AS total_orders,
         COUNT(*) AS total_items,
         ROUND(SUM(total_item_value), 2) AS total_revenue,
@@ -65,7 +65,7 @@ sales_by_seller_category_month AS (
         seller_id,
         seller_state,
         seller_city,
-        product_category_name_english
+        product_category_name
 ),
 distinct_order_seller_category_month AS (
     SELECT DISTINCT
@@ -77,7 +77,7 @@ distinct_order_seller_category_month AS (
         seller_id,
         seller_state,
         seller_city,
-        product_category_name_english
+        product_category_name
     FROM sales_base
 ),
 delivery_by_seller_category_month AS (
@@ -89,7 +89,7 @@ delivery_by_seller_category_month AS (
         bridge.seller_id,
         bridge.seller_state,
         bridge.seller_city,
-        bridge.product_category_name_english,
+        bridge.product_category_name,
         COUNT(DISTINCT bridge.order_id) FILTER (WHERE delivery.is_late IS TRUE) AS late_orders,
         ROUND(
             100.0 * COUNT(DISTINCT bridge.order_id) FILTER (WHERE delivery.is_late IS TRUE)
@@ -107,7 +107,7 @@ delivery_by_seller_category_month AS (
         bridge.seller_id,
         bridge.seller_state,
         bridge.seller_city,
-        bridge.product_category_name_english
+        bridge.product_category_name
 ),
 review_by_seller_category_month AS (
     SELECT
@@ -118,7 +118,7 @@ review_by_seller_category_month AS (
         bridge.seller_id,
         bridge.seller_state,
         bridge.seller_city,
-        bridge.product_category_name_english,
+        bridge.product_category_name,
         COUNT(r.review_key) AS total_reviews,
         ROUND(AVG(r.review_score), 2) AS avg_review_score,
         COUNT(r.review_key) FILTER (WHERE r.review_score <= 2) AS low_review_count,
@@ -134,7 +134,7 @@ review_by_seller_category_month AS (
         bridge.seller_id,
         bridge.seller_state,
         bridge.seller_city,
-        bridge.product_category_name_english
+        bridge.product_category_name
 )
 SELECT
     sales.year,
@@ -143,7 +143,7 @@ SELECT
     sales.seller_id,
     sales.seller_state,
     sales.seller_city,
-    sales.product_category_name_english,
+    sales.product_category_name,
     sales.total_orders,
     sales.total_items,
     sales.total_revenue,
@@ -161,9 +161,9 @@ LEFT JOIN delivery_by_seller_category_month delivery
     ON delivery.year = sales.year
    AND delivery.month = sales.month
    AND delivery.seller_key = sales.seller_key
-   AND delivery.product_category_name_english = sales.product_category_name_english
+   AND delivery.product_category_name = sales.product_category_name
 LEFT JOIN review_by_seller_category_month review
     ON review.year = sales.year
    AND review.month = sales.month
    AND review.seller_key = sales.seller_key
-   AND review.product_category_name_english = sales.product_category_name_english;
+   AND review.product_category_name = sales.product_category_name;

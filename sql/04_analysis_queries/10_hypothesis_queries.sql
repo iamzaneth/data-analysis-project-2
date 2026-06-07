@@ -92,7 +92,7 @@ WHERE payment_value IS NOT NULL
   AND payment_installments IS NOT NULL;
 
 -- H5 Dataset: Category differences in low review rate
--- Independent variable: product_category_name_english
+-- Independent variable: product_category_name
 -- Dependent variable: is_low_review
 -- Suggested test: chi-square test or logistic regression with category dummies
 -- Duplication note: order-level review is allocated to distinct categories in
@@ -100,7 +100,7 @@ WHERE payment_value IS NOT NULL
 WITH distinct_order_category AS (
     SELECT DISTINCT
         f.order_id,
-        COALESCE(p.product_category_name_english, 'Unknown') AS product_category
+        COALESCE(p.product_category_name, 'Unknown') AS product_category
     FROM dwh.fact_order_item_sales f
     LEFT JOIN dwh.dim_product p
         ON p.product_key = f.product_key

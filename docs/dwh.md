@@ -66,7 +66,7 @@ Tạo và nạp các bảng dimension từ staging:
 - `dim_date`: bảng ngày dùng cho nhiều vai trò ngày khác nhau.
 - `dim_customer`: thông tin khách hàng.
 - `dim_seller`: thông tin người bán.
-- `dim_product`: thông tin sản phẩm, có thêm category tiếng Anh từ `product_category_name_translation`.
+- `dim_product`: thông tin sản phẩm; `product_category_name` được chuẩn hóa sang tên tiếng Anh từ `product_category_name_translation`. Tên category tiếng Bồ Đào Nha chỉ nằm ở staging/raw, không lưu trong DWH.
 - `dim_geolocation`: thông tin địa lý theo `zip_code_prefix`, gồm city/state và tọa độ trung bình.
 - `dim_order_status`: danh mục trạng thái đơn hàng.
 - `dim_payment_type`: danh mục loại thanh toán.

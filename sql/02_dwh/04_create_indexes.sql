@@ -18,8 +18,10 @@ CREATE INDEX IF NOT EXISTS idx_dim_seller_state_city
 CREATE INDEX IF NOT EXISTS idx_dim_product_business_key
     ON dwh.dim_product (product_id);
 
+DROP INDEX IF EXISTS dwh.idx_dim_product_category;
+
 CREATE INDEX IF NOT EXISTS idx_dim_product_category
-    ON dwh.dim_product (product_category_name_english, product_category_name);
+    ON dwh.dim_product (product_category_name);
 
 CREATE INDEX IF NOT EXISTS idx_dim_geolocation_zip_code_prefix
     ON dwh.dim_geolocation (zip_code_prefix);

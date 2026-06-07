@@ -236,7 +236,7 @@ Các nhóm index chính:
 
 - `(year, month)` cho các mart có thời gian.
 - `customer_state` cho các mart phân tích theo khu vực.
-- `product_category_name_english` cho các mart có category.
+- `product_category_name` cho các mart có category. Cột này đã là tên category tiếng Anh.
 - `seller_id`, `seller_state` cho seller mart.
 - `payment_type` cho payment mart.
 - `(customer_state, customer_city)` cho geolocation mart.

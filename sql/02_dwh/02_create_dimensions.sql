@@ -35,7 +35,6 @@ CREATE TABLE IF NOT EXISTS dwh.dim_product (
     product_key BIGSERIAL PRIMARY KEY,
     product_id TEXT UNIQUE NOT NULL,
     product_category_name TEXT,
-    product_category_name_english TEXT,
     product_name_length INTEGER,
     product_description_length INTEGER,
     product_photos_qty INTEGER,
@@ -45,6 +44,9 @@ CREATE TABLE IF NOT EXISTS dwh.dim_product (
     product_width_cm NUMERIC,
     product_volume_cm3 NUMERIC
 );
+
+ALTER TABLE dwh.dim_product
+    DROP COLUMN IF EXISTS product_category_name_english;
 
 CREATE TABLE IF NOT EXISTS dwh.dim_geolocation (
     geolocation_key BIGSERIAL PRIMARY KEY,
@@ -187,7 +189,6 @@ ON CONFLICT (seller_id) DO UPDATE SET
 INSERT INTO dwh.dim_product (
     product_id,
     product_category_name,
-    product_category_name_english,
     product_name_length,
     product_description_length,
     product_photos_qty,
@@ -199,8 +200,7 @@ INSERT INTO dwh.dim_product (
 )
 SELECT DISTINCT ON (p.product_id)
     p.product_id,
-    p.product_category_name,
-    t.product_category_name_english,
+    COALESCE(t.product_category_name_english, 'Unknown') AS product_category_name,
     p.product_name_lenght AS product_name_length,
     p.product_description_lenght AS product_description_length,
     p.product_photos_qty,
@@ -216,7 +216,6 @@ WHERE p.product_id IS NOT NULL
 ORDER BY p.product_id
 ON CONFLICT (product_id) DO UPDATE SET
     product_category_name = EXCLUDED.product_category_name,
-    product_category_name_english = EXCLUDED.product_category_name_english,
     product_name_length = EXCLUDED.product_name_length,
     product_description_length = EXCLUDED.product_description_length,
     product_photos_qty = EXCLUDED.product_photos_qty,

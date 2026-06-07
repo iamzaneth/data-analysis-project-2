@@ -108,8 +108,7 @@ Kiến trúc Star Schema:
 |-----------|------------|---------|
 | `product_key` | BIGSERIAL PRIMARY KEY | Khóa chính thay thế |
 | `product_id` | TEXT UNIQUE | ID sản phẩm gốc |
-| `product_category_name` | TEXT | Danh mục sản phẩm tiếng Bồ Đào Nha (ví dụ: "telefonia") |
-| `product_category_name_english` | TEXT | Danh mục sản phẩm tiếng Anh (ví dụ: "telephony") |
+| `product_category_name` | TEXT | Danh mục sản phẩm tiếng Anh, lấy từ bảng translation (ví dụ: "telephony") |
 | `product_name_length` | INTEGER | Số ký tự trong tên sản phẩm (chỉ số về độ dài mô tả) |
 | `product_description_length` | INTEGER | Số ký tự trong mô tả sản phẩm |
 | `product_photos_qty` | INTEGER | Số lượng ảnh sản phẩm |
@@ -245,13 +244,13 @@ Tất cả bảng sự kiện được thiết kế với hạt (grain) rõ ràn
 -- Doanh số hàng tháng theo danh mục sản phẩm
 SELECT 
     d.month_name,
-    p.product_category_name_english,
+    p.product_category_name,
     SUM(f.total_item_value) as revenue,
     COUNT(*) as item_count
 FROM fact_order_item_sales f
 JOIN dim_date d ON f.purchase_date_key = d.date_key
 JOIN dim_product p ON f.product_key = p.product_key
-GROUP BY d.month_name, p.product_category_name_english;
+GROUP BY d.month_name, p.product_category_name;
 
 -- Top 10 seller theo số lượng mặt hàng bán ra
 SELECT 
