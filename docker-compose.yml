@@ -1,4 +1,5 @@
 services:
+  # 1. DWH & Database
   postgres:
     image: postgres:16
     container_name: dwh_postgres
@@ -11,6 +12,71 @@ services:
     volumes:
       - olist_postgres_data:/var/lib/postgresql/data
       - ./data/raw:/data/raw:ro
+
+  # 2. pgAdmin (Giao diện UI để truy vấn SQL trực quan)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_ui
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  # 3. Khởi tạo Database cho Airflow (Chạy 1 lần rồi tự tắt)
+  airflow-init:
+    image: apache/airflow:3.2.1
+    container_name: airflow_init
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://user:password@postgres/dwh
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    entrypoint: /bin/bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Hoang --lastname Data --role Admin --email admin@example.com"
+
+  # 4. Airflow Webserver (Giao diện quản lý DAGs)
+  airflow-webserver:
+    image: apache/airflow:3.2.1
+    container_name: airflow_webui
+    restart: always
+    depends_on:
+      - postgres
+      - airflow-init
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://user:password@postgres/dwh
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./olist_airflow/dags:/opt/airflow/dags
+      - ./olist_airflow/logs:/opt/airflow/logs
+      - ./olist_airflow/plugins:/opt/airflow/plugins
+      - ./scripts:/opt/airflow/scripts
+      - ./data:/opt/airflow/data
+    command: webserver
+
+  # 5. Airflow Scheduler (Bộ lập lịch)
+  airflow-scheduler:
+    image: apache/airflow:3.2.1
+    container_name: airflow_scheduler
+    restart: always
+    depends_on:
+      - postgres
+      - airflow-init
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://user:password@postgres/dwh
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./olist_airflow/dags:/opt/airflow/dags
+      - ./olist_airflow/logs:/opt/airflow/logs
+      - ./olist_airflow/plugins:/opt/airflow/plugins
+      - ./scripts:/opt/airflow/scripts
+      - ./data:/opt/airflow/data
+    command: scheduler
 
 volumes:
   olist_postgres_data:
