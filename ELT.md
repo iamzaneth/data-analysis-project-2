@@ -251,7 +251,238 @@ thì:
 
 ---
 
-# 📊 BƯỚC 3: KẾT NỐI POWER BI
+# 🗄️ BƯỚC 3: KẾT NỐI VÀ KIỂM TRA DỮ LIỆU BẰNG PGADMIN
+
+Sau khi DAG `olist_elt_pipeline` chạy thành công, bạn có thể sử dụng pgAdmin để kiểm tra dữ liệu trong PostgreSQL trước khi kết nối Power BI.
+
+## Truy cập pgAdmin
+
+Mở trình duyệt:
+
+```text
+http://localhost:5050
+```
+
+### Tài khoản đăng nhập
+
+```text
+Email: admin@admin.com
+Password: admin
+```
+
+---
+
+## Tạo kết nối đến Database Olist
+
+### Bước 1
+
+Tại menu bên trái:
+
+```text
+Servers
+```
+
+Chuột phải:
+
+```text
+Register
+→ Server...
+```
+
+---
+
+### Bước 2
+
+Trong tab **General**:
+
+```text
+Name: Olist DWH
+```
+
+(Có thể đặt bất kỳ tên nào bạn muốn)
+
+---
+
+### Bước 3
+
+Chuyển sang tab **Connection** và nhập:
+
+| Trường               | Giá trị        |
+| -------------------- | -------------- |
+| Host name/address    | postgres_olist |
+| Port                 | 5432           |
+| Maintenance database | olist_db       |
+| Username             | olist_user     |
+| Password             | olist_pass     |
+
+> **Lưu ý quan trọng:** Không sử dụng `localhost`.
+>
+> pgAdmin đang chạy trong container Docker riêng nên `localhost` sẽ trỏ đến chính container pgAdmin chứ không phải PostgreSQL.
+>
+> Phải sử dụng:
+>
+> ```text
+> postgres_olist
+> ```
+>
+> vì đây là hostname của container PostgreSQL trong Docker Network.
+
+Sau đó nhấn:
+
+```text
+Save
+```
+
+---
+
+## Khám phá dữ liệu
+
+Sau khi kết nối thành công, mở rộng cây thư mục:
+
+```text
+Servers
+└── Olist DWH
+    └── Databases
+        └── olist_db
+            └── Schemas
+```
+
+Bạn sẽ thấy các schema:
+
+```text
+staging
+dwh
+mart
+```
+
+---
+
+## Kiểm tra dữ liệu Staging
+
+Mở:
+
+```text
+Schemas
+└── staging
+    └── Tables
+```
+
+Bạn sẽ thấy các bảng dữ liệu nguồn của Olist, ví dụ:
+
+```text
+olist_customers
+olist_orders
+olist_order_items
+olist_products
+olist_sellers
+olist_geolocation
+olist_order_payments
+olist_order_reviews
+```
+
+Để xem dữ liệu:
+
+1. Chuột phải vào một bảng bất kỳ (ví dụ: `olist_customers`)
+2. Chọn:
+
+```text
+View/Edit Data
+→ All Rows
+```
+
+pgAdmin sẽ hiển thị toàn bộ dữ liệu đã được nạp từ nguồn CSV.
+
+---
+
+## Kiểm tra Data Warehouse
+
+Mở:
+
+```text
+Schemas
+└── dwh
+    └── Tables
+```
+
+Bạn sẽ thấy các bảng Dimension và Fact:
+
+### Dimension Tables
+
+```text
+dim_customer
+dim_seller
+dim_product
+dim_date
+dim_geolocation
+dim_order_status
+dim_payment_type
+```
+
+### Fact Tables
+
+```text
+fact_order_item_sales
+fact_order_delivery
+fact_payments
+fact_reviews
+```
+
+---
+
+## Kiểm tra Data Mart
+
+Mở:
+
+```text
+Schemas
+└── mart
+    └── Tables
+```
+
+Đây là các bảng dữ liệu cuối cùng được thiết kế dành riêng cho Power BI.
+
+Các bảng mart đã được:
+
+* Tổng hợp dữ liệu
+* Chuẩn hóa KPI
+* Tối ưu hiệu năng truy vấn
+* Thiết kế theo mô hình One-Big-Table
+
+Do đó người dùng cuối chỉ cần kết nối trực tiếp các bảng này vào Power BI mà không cần tạo Relationship hoặc viết SQL bổ sung.
+
+---
+
+## Thực thi SQL Trực Tiếp
+
+Để chạy truy vấn kiểm tra dữ liệu:
+
+1. Chọn database:
+
+```text
+olist_db
+```
+
+2. Chọn:
+
+```text
+Tools
+→ Query Tool
+```
+
+3. Ví dụ:
+
+```sql
+SELECT *
+FROM mart.mart_sales
+LIMIT 10;
+```
+
+4. Nhấn nút Execute (▶) để chạy truy vấn.
+
+Đây là công cụ chính để kiểm tra dữ liệu trước khi xây dựng Dashboard hoặc thực hiện phân tích chuyên sâu.
+
+
+# 📊 BƯỚC 4: KẾT NỐI POWER BI
 
 Để tránh xung đột với PostgreSQL cài trên Windows, hệ thống sử dụng cổng:
 
@@ -325,7 +556,7 @@ Do đó:
 
 ---
 
-# 📈 BƯỚC 4: HƯỚNG DẪN XÂY DỰNG DASHBOARD
+# 📈 BƯỚC 5: HƯỚNG DẪN XÂY DỰNG DASHBOARD
 
 Các yêu cầu nghiệp vụ và KPI đã được Data Engineer chuẩn bị sẵn dưới dạng SQL.
 
