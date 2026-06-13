@@ -1,0 +1,4 @@
+dlt[postgres]>=0.4.0
+dbt-postgres~=1.8.0
+psycopg2-binary>=2.9.0
+pandas>=2.0.0
