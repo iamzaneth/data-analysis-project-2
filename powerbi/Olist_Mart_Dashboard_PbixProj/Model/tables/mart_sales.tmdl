@@ -1,0 +1,95 @@
+﻿table mart_sales
+
+	column year
+		dataType: int64
+		sourceColumn: year
+
+	column month
+		dataType: int64
+		sourceColumn: month
+
+	column month_name
+		dataType: string
+		sourceColumn: month_name
+
+	column product_category_name
+		dataType: string
+		sourceColumn: product_category_name
+
+	column customer_state
+		dataType: string
+		sourceColumn: customer_state
+
+	column total_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_orders
+
+	column total_order_items
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_order_items
+
+	column total_sellers
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_sellers
+
+	column gross_merchandise_value
+		dataType: decimal
+		summarizeBy: sum
+		sourceColumn: gross_merchandise_value
+
+	column total_freight_value
+		dataType: decimal
+		summarizeBy: sum
+		sourceColumn: total_freight_value
+
+	column total_item_revenue
+		dataType: decimal
+		summarizeBy: sum
+		sourceColumn: total_item_revenue
+
+	column avg_item_price
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_item_price
+
+	column avg_freight_value
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_freight_value
+
+	column avg_item_revenue
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_item_revenue
+
+	column freight_to_gmv_pct
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: freight_to_gmv_pct
+
+	column avg_order_value
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_order_value
+
+	column period_start
+		dataType: dateTime
+		sourceColumn: period_start
+
+	column year_month
+		dataType: string
+		sourceColumn: year_month
+
+	partition mart_sales = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(PgServer, PgDatabase),
+				    Data = Source{[Schema = "mart", Item = "mart_sales"]}[Data],
+				    Result = AddPeriodColumns(Data)
+				in
+				    Result
+

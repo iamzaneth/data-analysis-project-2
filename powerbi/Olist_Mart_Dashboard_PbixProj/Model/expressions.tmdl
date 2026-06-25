@@ -1,0 +1,12 @@
+expression PgServer = "localhost:5433"
+
+expression PgDatabase = "olist_db"
+
+expression AddPeriodColumns =
+		(tbl as table) as table =>
+		let
+		    WithPeriodStart = Table.AddColumn(tbl, "period_start", each #date([year], [month], 1), type date),
+		    WithYearMonth = Table.AddColumn(WithPeriodStart, "year_month", each Text.From([year]) & "-" & Text.PadStart(Text.From([month]), 2, "0"), type text)
+		in
+		    WithYearMonth
+

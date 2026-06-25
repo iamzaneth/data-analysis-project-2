@@ -1,0 +1,117 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 20,
+            "y": 20
+          },
+          "nodeIndex": "_Measures",
+          "size": {
+            "height": 360,
+            "width": 260
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 330,
+            "y": 20
+          },
+          "nodeIndex": "mart_sales",
+          "size": {
+            "height": 360,
+            "width": 280
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 660,
+            "y": 20
+          },
+          "nodeIndex": "mart_logistics",
+          "size": {
+            "height": 360,
+            "width": 280
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 990,
+            "y": 20
+          },
+          "nodeIndex": "mart_customer_satisfaction",
+          "size": {
+            "height": 360,
+            "width": 300
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 330,
+            "y": 430
+          },
+          "nodeIndex": "mart_seller_performance",
+          "size": {
+            "height": 360,
+            "width": 300
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 680,
+            "y": 430
+          },
+          "nodeIndex": "mart_product_category",
+          "size": {
+            "height": 360,
+            "width": 300
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1030,
+            "y": 430
+          },
+          "nodeIndex": "mart_payment",
+          "size": {
+            "height": 360,
+            "width": 280
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 20,
+            "y": 430
+          },
+          "nodeIndex": "mart_geolocation",
+          "size": {
+            "height": 360,
+            "width": 280
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "Olist mart semantic model",
+      "zoomValue": 90,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": true,
+      "hideKeyFieldsWhenCollapsed": false
+    }
+  ],
+  "selectedDiagram": "Olist mart semantic model",
+  "defaultDiagram": "Olist mart semantic model"
+}

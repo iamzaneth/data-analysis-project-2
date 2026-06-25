@@ -1,0 +1,90 @@
+﻿table mart_payment
+
+	column year
+		dataType: int64
+		sourceColumn: year
+
+	column month
+		dataType: int64
+		sourceColumn: month
+
+	column month_name
+		dataType: string
+		sourceColumn: month_name
+
+	column payment_type
+		dataType: string
+		sourceColumn: payment_type
+
+	column customer_state
+		dataType: string
+		sourceColumn: customer_state
+
+	column total_payment_records
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_payment_records
+
+	column total_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_orders
+
+	column total_customers
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_customers
+
+	column total_payment_value
+		dataType: decimal
+		summarizeBy: sum
+		sourceColumn: total_payment_value
+
+	column avg_payment_value
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_payment_value
+
+	column avg_installments
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_installments
+
+	column max_installments
+		dataType: int64
+		summarizeBy: max
+		sourceColumn: max_installments
+
+	column single_payment_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: single_payment_orders
+
+	column installment_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: installment_orders
+
+	column installment_order_rate_pct
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: installment_order_rate_pct
+
+	column period_start
+		dataType: dateTime
+		sourceColumn: period_start
+
+	column year_month
+		dataType: string
+		sourceColumn: year_month
+
+	partition mart_payment = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(PgServer, PgDatabase),
+				    Data = Source{[Schema = "mart", Item = "mart_payment"]}[Data],
+				    Result = AddPeriodColumns(Data)
+				in
+				    Result
+

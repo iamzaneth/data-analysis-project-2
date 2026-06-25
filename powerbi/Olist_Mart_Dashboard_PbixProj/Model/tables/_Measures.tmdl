@@ -1,0 +1,134 @@
+﻿table _Measures
+
+	measure 'Total Revenue' = SUM('mart_sales'[total_item_revenue])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure GMV = SUM('mart_sales'[gross_merchandise_value])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Total Freight' = SUM('mart_sales'[total_freight_value])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Total Orders' = SUM('mart_sales'[total_orders])
+		formatString: #,0
+
+	measure 'Total Items' = SUM('mart_sales'[total_order_items])
+		formatString: #,0
+
+	measure 'Average Order Value' = DIVIDE([Total Revenue], [Total Orders])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Freight To GMV %' = DIVIDE([Total Freight], [GMV])
+		formatString: 0.00%
+
+	measure 'Delivered Orders' = SUM('mart_logistics'[delivered_orders])
+		formatString: #,0
+
+	measure 'Late Orders' = SUM('mart_logistics'[late_orders])
+		formatString: #,0
+
+	measure 'Late Delivery Rate %' = DIVIDE([Late Orders], [Delivered Orders])
+		formatString: 0.00%
+
+	measure 'Average Delivery Days' = DIVIDE(SUMX('mart_logistics', 'mart_logistics'[avg_delivery_days] * 'mart_logistics'[delivered_orders]), [Delivered Orders])
+		formatString: 0.00
+
+	measure 'Average Delay Days' = DIVIDE(SUMX('mart_logistics', 'mart_logistics'[avg_delay_days] * 'mart_logistics'[delivered_orders]), [Delivered Orders])
+		formatString: 0.00
+
+	measure 'Total Reviews' = SUM('mart_customer_satisfaction'[total_reviews])
+		formatString: #,0
+
+	measure 'Average Review Score' = DIVIDE(SUMX('mart_customer_satisfaction', 'mart_customer_satisfaction'[avg_review_score] * 'mart_customer_satisfaction'[total_reviews]), [Total Reviews])
+		formatString: 0.00
+
+	measure 'Low Review Count' = SUM('mart_customer_satisfaction'[low_review_count])
+		formatString: #,0
+
+	measure 'High Review Count' = SUM('mart_customer_satisfaction'[high_review_count])
+		formatString: #,0
+
+	measure 'Low Review Rate %' = DIVIDE([Low Review Count], [Total Reviews])
+		formatString: 0.00%
+
+	measure 'High Review Rate %' = DIVIDE([High Review Count], [Total Reviews])
+		formatString: 0.00%
+
+	measure 'Seller Revenue' = SUM('mart_seller_performance'[total_revenue])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Seller Orders' = SUM('mart_seller_performance'[total_orders])
+		formatString: #,0
+
+	measure 'Seller Avg Review Score' = DIVIDE(SUMX('mart_seller_performance', 'mart_seller_performance'[avg_review_score] * 'mart_seller_performance'[total_orders]), [Seller Orders])
+		formatString: 0.00
+
+	measure 'Seller Late Order Share %' = DIVIDE(SUM('mart_seller_performance'[late_orders]), [Seller Orders])
+		formatString: 0.00%
+
+	measure 'Seller Low Review Rate %' = DIVIDE(SUM('mart_seller_performance'[low_review_count]), [Seller Orders])
+		formatString: 0.00%
+
+	measure 'Seller Quality Risk Score' = ([Seller Low Review Rate %] * 50) + ([Seller Late Order Share %] * 30) + IF([Seller Revenue] >= 10000, 20, 10)
+		formatString: 0.00
+
+	measure 'Category Revenue' = SUM('mart_product_category'[total_revenue])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Category Orders' = SUM('mart_product_category'[total_orders])
+		formatString: #,0
+
+	measure 'Category Freight To Revenue %' = DIVIDE(SUM('mart_product_category'[total_freight_value]), [Category Revenue])
+		formatString: 0.00%
+
+	measure 'Category Avg Review Score' = DIVIDE(SUMX('mart_product_category', 'mart_product_category'[avg_review_score] * 'mart_product_category'[total_orders]), [Category Orders])
+		formatString: 0.00
+
+	measure 'Category Low Review Rate %' = DIVIDE(SUM('mart_product_category'[low_review_count]), [Category Orders])
+		formatString: 0.00%
+
+	measure 'Category Risk Score' = ([Category Low Review Rate %] * 50) + ([Category Freight To Revenue %] * 30) + IF([Category Revenue] >= 100000, 20, 10)
+		formatString: 0.00
+
+	measure 'Total Payment Value' = SUM('mart_payment'[total_payment_value])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Payment Orders' = SUM('mart_payment'[total_orders])
+		formatString: #,0
+
+	measure 'Average Payment Per Order' = DIVIDE([Total Payment Value], [Payment Orders])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Installment Order Rate %' = DIVIDE(SUM('mart_payment'[installment_orders]), [Payment Orders])
+		formatString: 0.00%
+
+	measure 'Regional Revenue' = SUM('mart_geolocation'[total_revenue])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Regional Orders' = SUM('mart_geolocation'[total_orders])
+		formatString: #,0
+
+	measure 'Regional AOV' = DIVIDE([Regional Revenue], [Regional Orders])
+		formatString: $#,0.00;-$#,0.00;$#,0.00
+
+	measure 'Regional Late Rate %' = DIVIDE(SUM('mart_geolocation'[late_orders]), SUM('mart_geolocation'[delivered_orders]))
+		formatString: 0.00%
+
+	measure 'Regional Avg Review Score' = DIVIDE(SUMX('mart_geolocation', 'mart_geolocation'[avg_review_score] * 'mart_geolocation'[total_orders]), [Regional Orders])
+		formatString: 0.00
+
+	measure 'Regional Market Score' = ([Regional Revenue] / 100000) - ([Regional Late Rate %] * 20) - (DIVIDE(5 - [Regional Avg Review Score], 5) * 20)
+		formatString: 0.00
+
+	column 'Measure Group'
+		dataType: string
+		sourceColumn: Measure Group
+
+	partition _Measures = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [#"Measure Group" = text], {{"Olist Mart Dashboard"}})
+				in
+				    Source
+
