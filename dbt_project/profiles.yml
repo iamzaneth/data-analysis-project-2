@@ -1,0 +1,13 @@
+# dbt_project/profiles.yml
+olist_elt:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DBT_HOST', 'postgres_olist') }}"
+      port: "{{ env_var('DBT_PORT', '5432') | int }}"
+      user: "{{ env_var('DBT_USER', 'olist_user') }}"
+      password: "{{ env_var('DBT_PASSWORD', 'olist_pass') }}"
+      dbname: "{{ env_var('DBT_DBNAME', 'olist_db') }}"
+      schema: public # Đổi thành public thay vì dwh
+      threads: 4

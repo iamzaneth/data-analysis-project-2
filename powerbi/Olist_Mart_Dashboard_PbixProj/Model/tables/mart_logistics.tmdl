@@ -1,0 +1,90 @@
+﻿table mart_logistics
+
+	column year
+		dataType: int64
+		sourceColumn: year
+
+	column month
+		dataType: int64
+		sourceColumn: month
+
+	column month_name
+		dataType: string
+		sourceColumn: month_name
+
+	column customer_state
+		dataType: string
+		sourceColumn: customer_state
+
+	column order_status
+		dataType: string
+		sourceColumn: order_status
+
+	column total_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_orders
+
+	column delivered_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: delivered_orders
+
+	column late_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: late_orders
+
+	column late_rate_pct
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: late_rate_pct
+
+	column avg_approval_days
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_approval_days
+
+	column avg_delivery_days
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_delivery_days
+
+	column avg_estimated_delivery_days
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_estimated_delivery_days
+
+	column avg_delay_days
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_delay_days
+
+	column avg_delay_days_for_late_orders
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_delay_days_for_late_orders
+
+	column max_delay_days
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: max_delay_days
+
+	column period_start
+		dataType: dateTime
+		sourceColumn: period_start
+
+	column year_month
+		dataType: string
+		sourceColumn: year_month
+
+	partition mart_logistics = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(PgServer, PgDatabase),
+				    Data = Source{[Schema = "mart", Item = "mart_logistics"]}[Data],
+				    Result = AddPeriodColumns(Data)
+				in
+				    Result
+

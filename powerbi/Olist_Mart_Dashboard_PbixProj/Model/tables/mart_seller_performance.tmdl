@@ -1,0 +1,108 @@
+﻿table mart_seller_performance
+
+	column year
+		dataType: int64
+		sourceColumn: year
+
+	column month
+		dataType: int64
+		sourceColumn: month
+
+	column month_name
+		dataType: string
+		sourceColumn: month_name
+
+	column seller_id
+		dataType: string
+		sourceColumn: seller_id
+
+	column seller_state
+		dataType: string
+		sourceColumn: seller_state
+
+	column seller_city
+		dataType: string
+		sourceColumn: seller_city
+
+	column product_category_name
+		dataType: string
+		sourceColumn: product_category_name
+
+	column total_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_orders
+
+	column total_items
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_items
+
+	column total_revenue
+		dataType: decimal
+		summarizeBy: sum
+		sourceColumn: total_revenue
+
+	column gross_merchandise_value
+		dataType: decimal
+		summarizeBy: sum
+		sourceColumn: gross_merchandise_value
+
+	column total_freight_value
+		dataType: decimal
+		summarizeBy: sum
+		sourceColumn: total_freight_value
+
+	column avg_item_price
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_item_price
+
+	column avg_freight_value
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_freight_value
+
+	column avg_review_score
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_review_score
+
+	column low_review_count
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: low_review_count
+
+	column low_review_rate_pct
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: low_review_rate_pct
+
+	column late_orders
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: late_orders
+
+	column late_rate_pct
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: late_rate_pct
+
+	column period_start
+		dataType: dateTime
+		sourceColumn: period_start
+
+	column year_month
+		dataType: string
+		sourceColumn: year_month
+
+	partition mart_seller_performance = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(PgServer, PgDatabase),
+				    Data = Source{[Schema = "mart", Item = "mart_seller_performance"]}[Data],
+				    Result = AddPeriodColumns(Data)
+				in
+				    Result
+

@@ -1,0 +1,105 @@
+﻿table mart_customer_satisfaction
+
+	column year
+		dataType: int64
+		sourceColumn: year
+
+	column month
+		dataType: int64
+		sourceColumn: month
+
+	column month_name
+		dataType: string
+		sourceColumn: month_name
+
+	column customer_state
+		dataType: string
+		sourceColumn: customer_state
+
+	column is_late
+		dataType: boolean
+		sourceColumn: is_late
+
+	column total_reviews
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: total_reviews
+
+	column avg_review_score
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_review_score
+
+	column low_review_count
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: low_review_count
+
+	column neutral_review_count
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: neutral_review_count
+
+	column high_review_count
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: high_review_count
+
+	column low_review_rate_pct
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: low_review_rate_pct
+
+	column high_review_rate_pct
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: high_review_rate_pct
+
+	column comment_title_count
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: comment_title_count
+
+	column comment_message_count
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: comment_message_count
+
+	column comment_message_rate_pct
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: comment_message_rate_pct
+
+	column avg_review_response_days
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_review_response_days
+
+	column avg_delivery_days
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_delivery_days
+
+	column avg_delay_days
+		dataType: decimal
+		summarizeBy: none
+		sourceColumn: avg_delay_days
+
+	column period_start
+		dataType: dateTime
+		sourceColumn: period_start
+
+	column year_month
+		dataType: string
+		sourceColumn: year_month
+
+	partition mart_customer_satisfaction = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(PgServer, PgDatabase),
+				    Data = Source{[Schema = "mart", Item = "mart_customer_satisfaction"]}[Data],
+				    Result = AddPeriodColumns(Data)
+				in
+				    Result
+

@@ -1,0 +1,210 @@
+version: 2
+
+# Khai báo Sources (tùy chọn: bạn có thể tách phần này ra sources.yml cho gọn, 
+# hoặc gộp chung vào schema.yml đều được)
+sources:
+  - name: staging
+    schema: staging
+    tables:
+      - name: olist_customers
+      - name: olist_geolocation
+      - name: olist_orders
+      - name: olist_order_items
+      - name: olist_order_payments
+      - name: olist_order_reviews
+      - name: olist_products
+      - name: olist_sellers
+      - name: product_category_name_translation
+
+models:
+  # ==========================================
+  # DIMENSIONS TESTING
+  # ==========================================
+  - name: dim_customer
+    columns:
+      - name: customer_key
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_seller
+    columns:
+      - name: seller_key
+        data_tests:
+          - unique
+          - not_null
+      - name: seller_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_product
+    columns:
+      - name: product_key
+        data_tests:
+          - unique
+          - not_null
+      - name: product_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_geolocation
+    columns:
+      - name: geolocation_key
+        data_tests:
+          - unique
+          - not_null
+      - name: zip_code_prefix
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_order_status
+    columns:
+      - name: order_status_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_payment_type
+    columns:
+      - name: payment_type_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_date
+    columns:
+      - name: date_key
+        data_tests:
+          - unique
+          - not_null
+
+  # ==========================================
+  # FACTS TESTING
+  # ==========================================
+  - name: fact_order_item_sales
+    # Test tính duy nhất trên nhiều cột (Check trùng lặp item)
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - order_item_id
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+      - name: order_item_id
+        data_tests:
+          - not_null
+      
+      # Check 4: Missing dimension keys (Sử dụng 'relationships')
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_key
+      - name: seller_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_seller')
+              field: seller_key
+      - name: product_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_product')
+              field: product_key
+      
+      # Check 5: Negative money values (Sử dụng 'expression_is_true' của dbt_utils)
+      - name: price
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: freight_value
+        data_tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: total_item_value
+        data_tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+  - name: fact_order_delivery
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_key
+      - name: order_status_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_order_status')
+              field: order_status_key
+
+  - name: fact_payments
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - payment_sequential
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_key
+      - name: payment_type_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_payment_type')
+              field: payment_type_key
+      # Check 5: Negative payments
+      - name: payment_value
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+  - name: fact_reviews
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - review_id
+            - order_id
+    columns:
+      - name: review_id
+        data_tests:
+          - not_null
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_key
+      # Check 6: Review scores outside 1-5 (Sử dụng 'accepted_values')
+      - name: review_score
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]

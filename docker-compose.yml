@@ -1,82 +1,110 @@
-services:
-  # 1. DWH & Database
-  postgres:
-    image: postgres:16
-    container_name: dwh_postgres
-    environment:
-      POSTGRES_DB: dwh
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - olist_postgres_data:/var/lib/postgresql/data
-      - ./data/raw:/data/raw:ro
+version: '3.8'
 
-  # 2. pgAdmin (Giao diện UI để truy vấn SQL trực quan)
+x-airflow-common:
+  &airflow-common
+  build: .
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres_airflow/airflow
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres_airflow/airflow
+    AIRFLOW__CORE__FERNET_KEY: '46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho='
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    AIRFLOW_CONN_OLIST_DB: postgresql://olist_user:olist_pass@postgres_olist/olist_db
+  volumes:
+    - ./olist_airflow/dags:/opt/airflow/dags
+    - ./olist_airflow/logs:/opt/airflow/logs
+    - ./olist_airflow/plugins:/opt/airflow/plugins
+    - ./scripts:/opt/airflow/scripts
+    - ./dbt_project:/opt/airflow/dbt_project
+    - ./data:/opt/airflow/data
+  networks:
+    - olist_network
+  depends_on:
+    - postgres_airflow
+    - postgres_olist
+
+services:
+  postgres_airflow:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_airflow_data:/var/lib/postgresql/data
+    networks:
+      - olist_network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+
+  postgres_olist:
+    image: postgres:15
+    shm_size: 1g
+    environment:
+      POSTGRES_USER: olist_user
+      POSTGRES_PASSWORD: olist_pass
+      POSTGRES_DB: olist_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_olist_data:/var/lib/postgresql/data
+    networks:
+      - olist_network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "olist_user"]
+      interval: 5s
+      retries: 5
+
   pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin_ui
+    image: dpage/pgadmin4:latest
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
-    depends_on:
-      - postgres
+    networks:
+      - olist_network
 
-  # 3. Khởi tạo Database cho Airflow (Chạy 1 lần rồi tự tắt)
-  airflow-init:
-    image: apache/airflow:3.2.1
-    container_name: airflow_init
-    depends_on:
-      - postgres
-    environment:
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://user:password@postgres/dwh
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    entrypoint: /bin/bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Hoang --lastname Data --role Admin --email admin@example.com"
-
-  # 4. Airflow Webserver (Giao diện quản lý DAGs)
   airflow-webserver:
-    image: apache/airflow:3.2.1
-    container_name: airflow_webui
-    restart: always
-    depends_on:
-      - postgres
-      - airflow-init
-    ports:
-      - "8080:8080"
-    environment:
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://user:password@postgres/dwh
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    volumes:
-      - ./olist_airflow/dags:/opt/airflow/dags
-      - ./olist_airflow/logs:/opt/airflow/logs
-      - ./olist_airflow/plugins:/opt/airflow/plugins
-      - ./scripts:/opt/airflow/scripts
-      - ./data:/opt/airflow/data
+    <<: *airflow-common
     command: webserver
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
-  # 5. Airflow Scheduler (Bộ lập lịch)
   airflow-scheduler:
-    image: apache/airflow:3.2.1
-    container_name: airflow_scheduler
-    restart: always
-    depends_on:
-      - postgres
-      - airflow-init
-    environment:
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://user:password@postgres/dwh
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    volumes:
-      - ./olist_airflow/dags:/opt/airflow/dags
-      - ./olist_airflow/logs:/opt/airflow/logs
-      - ./olist_airflow/plugins:/opt/airflow/plugins
-      - ./scripts:/opt/airflow/scripts
-      - ./data:/opt/airflow/data
+    <<: *airflow-common
     command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+
+networks:
+  olist_network:
+    driver: bridge
 
 volumes:
-  olist_postgres_data:
+  postgres_airflow_data:
+  postgres_olist_data:
