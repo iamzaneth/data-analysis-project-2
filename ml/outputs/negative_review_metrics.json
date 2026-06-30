@@ -1,0 +1,20 @@
+{
+  "row_count": 99224,
+  "negative_review_rate": 0.14688986535515602,
+  "accuracy": 0.8472143836168669,
+  "precision": 0.4830390334572491,
+  "recall": 0.5705268935236004,
+  "f1": 0.5231504781077001,
+  "roc_auc": 0.7879901644218439,
+  "confusion_matrix": [
+    [
+      18937,
+      2225
+    ],
+    [
+      1565,
+      2079
+    ]
+  ],
+  "classification_report": "              precision    recall  f1-score   support\n\n           0       0.92      0.89      0.91     21162\n           1       0.48      0.57      0.52      3644\n\n    accuracy                           0.85     24806\n   macro avg       0.70      0.73      0.72     24806\nweighted avg       0.86      0.85      0.85     24806\n"
+}

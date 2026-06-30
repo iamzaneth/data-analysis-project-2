@@ -1,0 +1,45 @@
+{
+  "row_count": 1796,
+  "selected_k": 2,
+  "k_scores": [
+    {
+      "k": 2,
+      "inertia": 18494.06865657607,
+      "silhouette_score": 0.30345691157278915
+    },
+    {
+      "k": 3,
+      "inertia": 16005.911069141746,
+      "silhouette_score": 0.2114524137616656
+    },
+    {
+      "k": 4,
+      "inertia": 14109.137939434322,
+      "silhouette_score": 0.21216352592031285
+    },
+    {
+      "k": 5,
+      "inertia": 12463.530563997901,
+      "silhouette_score": 0.2232827051214918
+    },
+    {
+      "k": 6,
+      "inertia": 11686.0772196591,
+      "silhouette_score": 0.19126686978155813
+    },
+    {
+      "k": 7,
+      "inertia": 10977.324186556705,
+      "silhouette_score": 0.17129527034689057
+    },
+    {
+      "k": 8,
+      "inertia": 10399.582875539372,
+      "silhouette_score": 0.17636196126434436
+    }
+  ],
+  "segment_counts": {
+    "Emerging Sellers": 1189,
+    "High-Value Watchlist Sellers": 607
+  }
+}

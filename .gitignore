@@ -21,6 +21,18 @@ data/processed/*
 ml/models/*
 !ml/models/.gitkeep
 
+# ML generated outputs
+ml/outputs/negative_review_predictions.csv
+ml/outputs/seller_segments.csv
+
+# Python cache inside project tools
+ml/__pycache__/
+
+# dbt generated/vendor artifacts
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
 # Logs
 logs/
 *.log
